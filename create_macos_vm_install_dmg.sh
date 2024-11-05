@@ -131,7 +131,7 @@ fi
 if [[ "$macOS11" = 1 ]]; then
     disk_image_size=20
 else
-    disk_image_size=8
+    disk_image_size=9
 fi
 
 disk_image_filesystem="HFS+J"
@@ -148,6 +148,16 @@ if [[ $EUID -ne 0 ]]; then
    msg_status "You will be prompted for your password now, to run commands with root privileges"
    msg_status "using sudo. This will allow the createinstallmedia tool to copy installer files"
    msg_status "onto /Volumes/$random_disk_image_name."
+fi
+
+# Fixing code signature for the createinstallmedia tool shipped with macOS installers earlier than macOS Big Sur.
+# Fix is to use the codesign tool to assign an ad-hoc code signature to the the createinstallmedia tool, in place
+# of the Apple-assigned code signature tool that the createinstallmedia tool currently has.
+
+if [[ "$macOS11" = 0 ]]; then
+    msg_status "Code signature for the $install_esd/Contents/Resources/createinstallmedia tool may be invalid because this is an older macOS installer."
+    msg_status "Running codesign tool to assign an ad-hoc code signature which works for this Mac."
+    sudo codesign -s - -f "$install_esd/Contents/Resources/createinstallmedia"
 fi
 
 # The createinstallmedia tool requires different options, depending on which OS installer's createinstallmedia tool is being used.
